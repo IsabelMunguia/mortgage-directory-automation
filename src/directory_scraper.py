@@ -1,12 +1,13 @@
 """
-Mortgage Directory Automation
+Mortgage Loan Officer Directory Automation
 Author: Isabel Munguia
 
 Sanitized portfolio example demonstrating the general workflow used
-to collect publicly available directory information.
+to collect publicly available loan officer information from mortgage
+company directories.
 
-This example uses fictional selectors and URLs and does not contain
-customer-specific code, data, or production configuration.
+This version uses fictional selectors and URLs and does not contain
+customer-specific code, private datasets, or production configuration.
 """
 
 import time
@@ -32,7 +33,7 @@ def create_driver():
 
 def collect_profile_links(driver, directory_url):
     """
-    Discover employee profile links from a directory page.
+    Discover loan officer profile links from a directory page.
 
     Selectors are intentionally generic for portfolio purposes.
     """
@@ -42,22 +43,51 @@ def collect_profile_links(driver, directory_url):
 
     profile_links = []
 
-    elements = driver.find_elements(By.CSS_SELECTOR, "a.employee-profile")
+    elements = driver.find_elements(
+        By.CSS_SELECTOR,
+        "a.loan-officer-profile"
+    )
 
     for element in elements:
         link = element.get_attribute("href")
 
-        if link:
+        if link and link not in profile_links:
             profile_links.append(link)
 
     return profile_links
 
 
-def parse_profile(profile_url):
+def parse_licensed_states(soup):
     """
-    Retrieve and parse a directory profile.
+    Extract states where the loan officer is listed as licensed.
 
-    This portfolio version returns a simplified data structure.
+    The selector below is fictional and provided only to demonstrate
+    how state licensing data could be collected and structured.
+    """
+
+    state_elements = soup.select(".licensed-state")
+
+    states = []
+
+    for element in state_elements:
+        state = element.get_text(strip=True)
+
+        if state and state not in states:
+            states.append(state)
+
+    return ", ".join(states) if states else "Not Available"
+
+
+def parse_profile(profile_url, company_name):
+    """
+    Retrieve and parse a loan officer profile.
+
+    This sanitized portfolio version extracts:
+    - name
+    - business email
+    - business phone
+    - licensed states
+    - mortgage company
     """
 
     response = requests.get(
@@ -70,21 +100,40 @@ def parse_profile(profile_url):
 
     response.raise_for_status()
 
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(
+        response.text,
+        "html.parser"
+    )
 
-    name_element = soup.select_one(".employee-name")
-    title_element = soup.select_one(".employee-title")
-    location_element = soup.select_one(".employee-location")
+    name_element = soup.select_one(".loan-officer-name")
+    email_element = soup.select_one(".loan-officer-email")
+    phone_element = soup.select_one(".loan-officer-phone")
 
     return {
-        "name": name_element.get_text(strip=True) if name_element else None,
-        "job_title": title_element.get_text(strip=True) if title_element else None,
-        "location": location_element.get_text(strip=True) if location_element else None,
+        "loan_officer_name": (
+            name_element.get_text(strip=True)
+            if name_element
+            else "Not Available"
+        ),
+        "email": (
+            email_element.get_text(strip=True)
+            if email_element
+            else "Not Available"
+        ),
+        "phone": (
+            phone_element.get_text(strip=True)
+            if phone_element
+            else "Not Available"
+        ),
+        "licensed_states": parse_licensed_states(soup),
+        "company": company_name,
     }
 
 
 def clean_records(records):
-    """Convert extracted records into a clean Pandas DataFrame."""
+    """
+    Convert extracted records into a clean Pandas DataFrame.
+    """
 
     df = pd.DataFrame(records)
 
@@ -95,8 +144,13 @@ def clean_records(records):
     return df
 
 
-def export_results(df, filename="directory_results"):
-    """Export structured results to CSV and Excel."""
+def export_results(
+    df,
+    filename="loan_officer_directory_results"
+):
+    """
+    Export structured loan officer records to CSV and Excel.
+    """
 
     df.to_csv(
         f"{filename}.csv",
@@ -110,9 +164,15 @@ def export_results(df, filename="directory_results"):
 
 
 def main():
+    """
+    Demonstration workflow.
 
-    # Fictional demonstration URL
-    directory_url = "https://example.com/employees"
+    The URL and company below are fictional and are included only
+    to show the structure of the original automation process.
+    """
+
+    directory_url = "https://example.com/loan-officers"
+    company_name = "Example Mortgage Co."
 
     driver = create_driver()
 
@@ -125,13 +185,16 @@ def main():
         )
 
         print(
-            f"Discovered {len(profile_links)} profile links."
+            f"Discovered {len(profile_links)} loan officer profiles."
         )
 
         for profile_url in profile_links:
 
             try:
-                record = parse_profile(profile_url)
+                record = parse_profile(
+                    profile_url,
+                    company_name
+                )
 
                 records.append(record)
 
@@ -150,11 +213,11 @@ def main():
         export_results(df)
 
         print(
-            f"Exported {len(df)} records."
+            f"Exported {len(df)} loan officer records."
         )
 
     else:
-        print("No records were collected.")
+        print("No loan officer records were collected.")
 
 
 if __name__ == "__main__":

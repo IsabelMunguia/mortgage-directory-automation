@@ -1,6 +1,6 @@
 # Mortgage Directory Automation
 
-Python automation project for collecting, structuring, and exporting publicly available employee directory data for business research.
+Python automation project for collecting, structuring, and exporting publicly available employee directory data for business research. Automated collection of publicly available loan officer directory data, including business email addresses, phone numbers, company information, and state licensing coverage, across multiple mortgage company directories.
 
 ## Overview
 
@@ -27,8 +27,8 @@ The project involved working with several directory structures, including dynami
 ## Project Scope
 
 The automation was used across approximately **3–5 mortgage company directories**.
-
-Typical directory sizes included:
+Typically containing 100+ loan officer records per company, with one directory containing 300+ records.
+Sizes included:
 
 - 100+ employee records per company
 - One directory containing more than 300 employee records
